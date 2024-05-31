@@ -1,5 +1,4 @@
-﻿werkzeug
-fitz
+﻿fitz
 transformers
 gunicorn
 flask
@@ -9,3 +8,4 @@ nltk
 numpy
 pandas
 scikit_learn
+werkzeug
