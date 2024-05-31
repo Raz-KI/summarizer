@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 from flask_wtf import FlaskForm
-from wtforms import FileField, SubmitField
+from wtforms import FileField, SubmitField, TextAreaField
 from werkzeug.utils import secure_filename
 import os
 from wtforms.validators import InputRequired
@@ -12,28 +12,41 @@ app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = 'static/files'
 
 class UploadFileForm(FlaskForm):
-    file = FileField("File", validators=[InputRequired()])
-    submit = SubmitField("Upload File")
+    file = FileField("File")
+    submit = SubmitField("Upload ")
+
+class UploadTextForm(FlaskForm):
+    text = TextAreaField('Which actor is your favorite?', validators=[InputRequired()],default="0")
+    tsubmit = SubmitField("Upload")
 
 final_summary=None
 @app.route('/', methods=['GET',"POST"])
 @app.route('/home', methods=['GET',"POST"])
 def home():
     form = UploadFileForm()
-    if form.validate_on_submit():
+    tform = UploadTextForm()
+
+    if tform.validate_on_submit():
+        text=preprocess(tform.text.data)
+        final_summary=summarize(text)
+        return render_template('index.html',tform=tform, form=form, summary=final_summary,blankspace="      ")
+    
+    elif form.validate_on_submit():
         file = form.file.data # First grab the file
         file_name = secure_filename(file.filename)
         file.save(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'],secure_filename(file.filename))) # Then save the file
         
         pdf_path="static/files/"+file_name
 
-        summ=extract_text_from_pdf(pdf_path)
-        final_summary=summarize(summ)
+        text_from_pdf=extract_text_from_pdf(pdf_path)
+        text_from_pdf=preprocess(text_from_pdf)
+        
+        final_summary=summarize(text_from_pdf)
         os.remove(pdf_path)
 
-        return render_template('index.html', form=form, summary=final_summary,blankspace="      ")
+        return render_template('index.html',tform=tform, form=form, summary=final_summary,blankspace="      ")
 
-    return render_template('index.html', form=form,summary="Notes will be displayed here",blankspace="      ")
+    return render_template('index.html',tform=tform, form=form,summary="Notes will be displayed here",blankspace="      ")
 
 def extract_text_from_pdf(pdf_path):
     # Open the PDF file
@@ -51,4 +64,7 @@ def summarize(to_summarize):
     final_summary=summary[0]['summary_text']
     return final_summary
 
-
+def preprocess(text):
+    return text
+if __name__ == '__main__':
+    app.run(debug=True)
