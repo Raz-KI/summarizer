@@ -52,6 +52,3 @@ def summarize(to_summarize):
     return final_summary
 
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
